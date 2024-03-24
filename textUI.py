@@ -1,6 +1,8 @@
 from enum import Enum
 from pathlib import Path
-from typing import List, Self
+import sys
+from typing import Optional
+from logicSimulator import LogicSimulator
 
 
 class Command(Enum):
@@ -13,191 +15,76 @@ class Command(Enum):
 class TextUI:
 
     def __init__(self) -> None:
-        self.MENU = """
-        1. Load logic circuit file
-        2. Simulation
-        3. Display truth table
-        4. Exit
-        Command:
-        """
-        self.logicSimulator: LogicSimulator = LogicSimulator()
+        self.MENU = "1. Load logic circuit file\n"\
+                    "2. Simulation\n"\
+                    "3. Display truth table\n"\
+                    "4. Exit\n"\
+                    "Command:"
+        self.logicSimulator: Optional[LogicSimulator] = None
 
-    def displayMenu(self):
-        pass
-
-    def processCommand(self):
+    def displayMenu(self) -> None:
         while True:
             # try read command
-            command: Command = int(input(self.MENU))
-            if command == Command.Load_logic_circuit_file:
-                filePath = Path(input("Please key in a file path: "))
-                # verify path
-                if filePath.exists():
-                    with open(filePath, "r") as lcf:
-                        # verify lcf
-                        if self.logicSimulator.load(lcf):
-                            print(f"Circuit: {len(self.logicSimulator.iPins)} input pins, \
-                                    {len(self.logicSimulator.oPins)} output pins and \
-                                        {len(self.logicSimulator.circuit)} gates")
-                            continue
-                self.logicSimulator = None
-                print("File not found or file format error!!")
-                continue
-            if len(self.logicSimulator.iPins) == 0:
-                print("Please load an lcf file, before using this operation.")
-                continue
-            if command == Command.Simulation:
-                pins = []
-                for i in range(1, len(self.logicSimulator.iPins)+1):
-                    pin = int(
-                        input(f"Please key in the value of input pin {i}: ")
-                    )
-                    while pin != 0 or pin != 1:
-                        print("The value of input pin must be 0/1")
-                    pins.append(pin)
-                print("Simulation Result:")
-                print(self.logicSimulator.getSimulitaionResult())
-            elif command == Command.Display_truth_table:
-                print("Truth table:")
-                print(self.logicSimulator.getTruthTable())
-            elif command == Command.Exit:
-                print("Goodbye, thanks for using LS.")
-                break
-            else:
-                # Invalid Command
-                pass
+            sys.stdout.write(self.MENU)
+            command = Command(int(sys.stdin.readline().rstrip()))
+            self.processCommand(command)
+            sys.stdout.write("\n")
+
+    def processCommand(self, command: Command) -> None:
+        if command == Command.Exit:
+            sys.stdout.write("Goodbye, thanks for using LS.\n")
+            exit()
+        if command == Command.Load_logic_circuit_file:
+            sys.stdout.write("Please key in a file path: ")
+            filePath = Path(sys.stdin.readline().rstrip())
+            # verify path
+            if filePath.exists():
+                with open(filePath, "r") as lcf:
+                    # verify lcf
+                    logicSimulator = LogicSimulator()
+                    if logicSimulator.load(lcf.read()):
+                        self.logicSimulator = logicSimulator
+                        sys.stdout.write(
+                            f"Circuit: {len(self.logicSimulator.iPins)} input pins, "
+                            f"{len(self.logicSimulator.oPins)} output pins and "
+                            f"{len(self.logicSimulator.circuit)} gates\n")
+                        return
+            sys.stdout.write("File not found or file format error!!\n")
+        elif not self.logicSimulator:
+            sys.stdout.write(
+                "Please load an lcf file, before using this operation.\n")
+        elif command == Command.Simulation:
+            for i in range(len(self.logicSimulator.iPins)):
+                sys.stdout.write(
+                    f"Please key in the value of input pin {i+1}: ")
+                pin = int(sys.stdin.readline().rstrip())
+                while pin != 0 and pin != 1:
+                    sys.stdout.write("The value of input pin must be 0/1\n"
+                                     f"Please key in the value of input pin {i+1}: ")
+                    pin = int(sys.stdin.readline().rstrip())
+                self.logicSimulator.iPins[i].output = pin
+            sys.stdout.write("Simulation Result:\n" +
+                             self.logicSimulator.getSimulitaionResult() + "\n")
+        elif command == Command.Display_truth_table:
+            sys.stdout.write("Truth table:\n" +
+                             self.logicSimulator.getTruthTable() + "\n")
+        else:
+            raise ValueError
 
 
-class LogicSimulator:
-    def __init__(self) -> None:
-        self.circuit: List[Device] = []
-        self.iPins: List[Device] = []
-        self.oPins: List[Device] = []
-
-    def getSimulitaionResult(self) -> str:
-        return
-
-    def getTruthTable(self) -> str:
-        return
-
-    def load(self, lcf: str) -> bool:
-        try:
-            lines = lcf.split("\n")
-            pinCount = int(lines[0])
-            for _ in range(pinCount):
-                self.iPins.append(Device(DeviceType.iPin))
-            gateCount = int(lines[1])
-            gatesInfos = [lines[2 + i].split(" ") for i in range(gateCount)]
-            deviceFactory = DeviceFactory()
-            # init circuit
-            for info in gatesInfos:
-                gateType = int(info[0])
-                self.circuit.append(deviceFactory.generateDevice(gateType))
-            for gate, info in zip(self.circuit, gatesInfos):
-                for device in info[1:-1]:
-                    if device[0] == "-":  # pin
-                        deviceID = int(device[1:])
-                        gate.addInputPin(self.iPins[deviceID-1])
-                    else:  # gate
-                        deviceID = int(device[:device.find(",")])
-                        gate.addInputPin(self.circuit[deviceID-1])
-            return True
-        except Exception as e:
-            return False
-
-
-class DeviceType(Enum):
-    oPin = 1
-    iPin = 2
-    gateNot = 3
-    gateAND = 4
-    gateOR = 5
-
-
-class Device:
-    def __init__(self) -> None:
-        self.iPins: List[Device] = []
-        self.output: int = 0
-
-    def addInputPin(self, device: Self) -> None:
-        self.iPins.append(device)
-
-    def getOutput(self) -> int:
-        return self.output
-
-
-class OPin(Device):
-    def __init__(self) -> None:
-        super().__init__()
-
-    def getOutput(self) -> int:
-        return self.iPins[0].getOutput()
-
-
-class IPin(Device):
-    def __init__(self) -> None:
-        super().__init__()
-
-
-class GateNot(Device):
-    def __init__(self) -> None:
-        super().__init__()
-
-    def getOutput(self) -> int:
-        self.output = self.iPins[0].getOutput()
-        self.output = self.output ^ self.output
-        return self.output
-
-
-class GateAND(Device):
-    def __init__(self) -> None:
-        super().__init__()
-
-    def getOutput(self) -> int:
-        self.output = 1
-        for pin in self.iPins:
-            if pin.getOutput() == 0:
-                self.output = 0
-                break
-        return self.output
-
-
-class GateOR(Device):
-    def __init__(self) -> None:
-        super().__init__()
-
-    def getOutput(self) -> int:
-        self.output = 0
-        for pin in self.iPins:
-            if pin.getOutput() == 1:
-                self.output = 1
-                break
-        return self.output
-
-
-class DeviceFactory:
-    def __init__(self) -> None:
-        pass
-
-    def generateDevice(self, deviceType: DeviceType) -> Device:
-        if deviceType == DeviceType.gateAND:
-            return GateAND()
-        if deviceType == DeviceType.gateNot:
-            return GateNot()
-        if deviceType == DeviceType.gateORND:
-            return GateOR()
-        if deviceType == DeviceType.iPin:
-            return IPin()
-        if deviceType == DeviceType.oPin:
-            return OPin()
-        raise ValueError
-
-
-def testing():
-    ui = TextUI()
-    ui.displayMenu()
-    ui.processCommand()
+def testing(testCasePath: str, resultPath: str):
+    try:
+        sys.stdin = open(testCasePath, "r")
+        sys.stdout = open(resultPath, "w")
+        ui = TextUI()
+        ui.displayMenu()
+    except Exception as e:
+        sys.stdout.write(f"{e}\n")
+    finally:
+        sys.stdin.close()
+        sys.stdout.close()
 
 
 if __name__ == "__main__":
-    testing()
+    testing(r"C:\VS_Workplace\POSD\testcase.txt",
+            r"C:\VS_Workplace\POSD\result.txt")

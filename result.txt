@@ -1,0 +1,51 @@
+1. Load logic circuit file
+2. Simulation
+3. Display truth table
+4. Exit
+Command:Please key in a file path: File not found or file format error!!
+
+1. Load logic circuit file
+2. Simulation
+3. Display truth table
+4. Exit
+Command:Please load an lcf file, before using this operation.
+
+1. Load logic circuit file
+2. Simulation
+3. Display truth table
+4. Exit
+Command:Please key in a file path: Circuit: 3 input pins, 1 output pins and 3 gates
+
+1. Load logic circuit file
+2. Simulation
+3. Display truth table
+4. Exit
+Command:Please key in the value of input pin 1: The value of input pin must be 0/1
+Please key in the value of input pin 1: Please key in the value of input pin 2: Please key in the value of input pin 3: Simulation Result:
+i i i | o
+1 2 3 | 1
+------+--
+0 1 1 | 0
+
+1. Load logic circuit file
+2. Simulation
+3. Display truth table
+4. Exit
+Command:Truth table:
+i i i | o
+1 2 3 | 1
+------+--
+0 0 0 | 0
+0 0 1 | 0
+0 1 0 | 0
+0 1 1 | 0
+1 0 0 | 1
+1 0 1 | 1
+1 1 0 | 0
+1 1 1 | 0
+
+1. Load logic circuit file
+2. Simulation
+3. Display truth table
+4. Exit
+Command:Goodbye, thanks for using LS.

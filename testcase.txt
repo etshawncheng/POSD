@@ -1,0 +1,12 @@
+1
+C:\VS_Workplace\POSD\file_not_exist_or_format_error.lcf
+2
+1
+C:\VS_Workplace\POSD\file1.lcf
+2
+-1
+0
+1
+1
+3
+4
