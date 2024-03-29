@@ -34,7 +34,7 @@ class TextUI:
 
     def processCommand(self, command: Command) -> None:
         if command == Command.Exit:
-            sys.stdout.write("Goodbye, thanks for using LS.\n")
+            sys.stdout.write("Goodbye, thanks for using LS.")
             self.exit = True
             return
         if command == Command.Load_logic_circuit_file:
@@ -56,11 +56,11 @@ class TextUI:
                     f"{len(self.logicSimulator.oPins)} output pins and "
                     f"{len(self.logicSimulator.circuit)} gates\n")
             return
-        if not self.logicSimulator:
-            sys.stdout.write(
-                "Please load an lcf file, before using this operation.\n")
-            return
         if command == Command.Simulation:
+            if not self.logicSimulator:
+                sys.stdout.write(
+                    "Please load an lcf file, before using this operation.\n")
+                return
             for i in range(len(self.logicSimulator.iPins)):
                 sys.stdout.write(
                     f"Please key in the value of input pin {i+1}: ")
@@ -72,26 +72,16 @@ class TextUI:
                 self.logicSimulator.iPins[i].output = pinValue
             sys.stdout.write("Simulation Result:\n" +
                              self.logicSimulator.getSimulitaionResult() + "\n")
-        elif command == Command.Display_truth_table:
+            return
+        if command == Command.Display_truth_table:
+            if not self.logicSimulator:
+                sys.stdout.write(
+                    "Please load an lcf file, before using this operation.\n")
+                return
             sys.stdout.write("Truth table:\n" +
                              self.logicSimulator.getTruthTable() + "\n")
-        else:
-            raise ValueError
-
-
-def testing(testCasePath: str, resultPath: str):
-    try:
-        sys.stdin = open(testCasePath, "r")
-        sys.stdout = open(resultPath, "w")
-        ui = TextUI()
-        ui.displayMenu()
-    except Exception as e:
-        sys.stdout.write(f"{e}\n")
-    finally:
-        sys.stdin.close()
-        sys.stdout.close()
+            return
 
 
 if __name__ == "__main__":
-    testing(r"C:\VS_Workplace\POSD\testcase.txt",
-            r"C:\VS_Workplace\POSD\result.txt")
+    TextUI().displayMenu()

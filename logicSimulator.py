@@ -9,18 +9,14 @@ class LogicSimulator:
         self.circuit: List[Device] = []
         self.iPins: List[Device] = []
         self.oPins: List[Device] = []
-        pin = r"-([0-9])*?"  # 3
-        gate = r"([0-9])*?.([0-9])*?"  # 3
+        pin = r"-([0-9])*?"  # -3
+        gate = r"([0-9])*?.([0-9])*?"  # 3.1
         gateinfo = r"[1-3]" + rf"( ({pin}|{gate}))+?" + " 0"  # 1 -1 2.1 0
         self.LCF_FORMAT = r"([0-9])*?\n" * 2 + \
             rf"({gateinfo}\n)*?{gateinfo}(\n)?"
 
     def getSimulitaionResult(self) -> str:
-        result = self.getHeader()
-        iPins = [str(iPin.output) for iPin in self.iPins]
-        oPins = [str(oPin.getOutput()) for oPin in self.oPins]
-        result += " ".join(iPins) + " | " + " ".join(oPins)
-        return result
+        return self.getHeader() + "\n" + self.getPinResult()
 
     def getTruthTable(self) -> str:
         truthTable = self.getHeader()
@@ -28,15 +24,15 @@ class LogicSimulator:
             # init ipin
             for iPin, v in zip(self.iPins, values):
                 iPin.output = v
-            iPins = [str(iPin.output) for iPin in self.iPins]
-            oPins = [str(oPin.getOutput()) for oPin in self.oPins]
-            truthTable += " ".join(iPins) + " | " + " ".join(oPins) + "\n"
-        return truthTable[:-1]
+            truthTable += "\n" + self.getPinResult()
+        return truthTable
 
     def load(self, lcf: str) -> bool:
+        # %% Check format
         if not self.isLcfFormat(lcf):
             return False
         lines = lcf.split("\n")
+        # remove empty line
         if lines[-1] == "":
             lines.pop()
         pinCount = int(lines[0])
@@ -47,6 +43,8 @@ class LogicSimulator:
             return False
         if gateCount + 2 != len(lines):
             return False
+        # %%
+        # init ipins
         for _ in range(pinCount):
             self.iPins.append(IPin())
         deviceFactory = DeviceFactory()
@@ -57,6 +55,7 @@ class LogicSimulator:
         for info in gatesInfos:
             gateType = DeviceType(int(info[0]))
             self.circuit.append(deviceFactory.generateDevice(gateType))
+        # construct circuit
         for gate, info in zip(self.circuit, gatesInfos):
             for device in info[1:-1]:
                 if device[0] == "-":  # pin
@@ -74,6 +73,7 @@ class LogicSimulator:
             gateHasOGates) if not hasOGates]
         if len(oGateIdxes) == 0:
             return False
+        # init opins
         for i in oGateIdxes:
             gateToOPin = self.circuit[i]
             self.oPins.append(OPin())
@@ -97,12 +97,20 @@ class LogicSimulator:
             count -= 1
         return preInputs
 
+    def getPinResult(self) -> str:
+        iPins = (str(iPin.getOutput()) for iPin in self.iPins)
+        oPins = map(str, self.getSimulateOutput())
+        return " ".join(iPins) + " | " + " ".join(oPins)
+
+    def getSimulateOutput(self) -> List[int]:
+        return [oPin.getOutput() for oPin in self.oPins]
+
     def getHeader(self) -> str:
         iPinCount = len(self.iPins)
         oPinCount = len(self.oPins)
         header = f"{'i ' * iPinCount}|{' o' * oPinCount}\n"
         iPinIDs = [str(i) for i in range(1, iPinCount+1)]
-        header += " ".join(iPinIDs) + " | " + " ".join(oPinIDs) + "\n"
         oPinIDs = [str(i) for i in range(1, oPinCount+1)]
-        header += f"{'-' * (iPinCount << 1)}+{'-' * (oPinCount << 1)}\n"
+        header += " ".join(iPinIDs) + " | " + " ".join(oPinIDs) + "\n"\
+            f"{'-' * (iPinCount << 1)}+{'-' * (oPinCount << 1)}"
         return header

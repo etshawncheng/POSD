@@ -27,13 +27,15 @@ class OPin(Device):
         super().__init__()
 
     def getOutput(self) -> int:
-        return self.iPins[0].getOutput()
+        self.output = self.iPins[0].getOutput()
+        return self.output
 
 
 class IPin(Device):
     def __init__(self, value: int = 0) -> None:
         super().__init__()
         self.output = value
+
 
 class GateNot(Device):
     def __init__(self) -> None:
@@ -85,4 +87,3 @@ class DeviceFactory:
             return IPin()
         if deviceType == DeviceType.oPin:
             return OPin()
-        raise ValueError
