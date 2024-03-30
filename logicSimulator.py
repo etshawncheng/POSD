@@ -109,8 +109,8 @@ class LogicSimulator:
         iPinCount = len(self.iPins)
         oPinCount = len(self.oPins)
         header = f"{'i ' * iPinCount}|{' o' * oPinCount}\n"
-        iPinIDs = [str(i) for i in range(1, iPinCount+1)]
-        oPinIDs = [str(i) for i in range(1, oPinCount+1)]
+        iPinIDs = map(str, range(1, iPinCount+1))
+        oPinIDs = map(str, range(1, oPinCount+1))
         header += " ".join(iPinIDs) + " | " + " ".join(oPinIDs) + "\n"\
             f"{'-' * (iPinCount << 1)}+{'-' * (oPinCount << 1)}"
         return header
