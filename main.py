@@ -1,5 +1,6 @@
 from io import StringIO
 from pathlib import Path
+import sys
 import unittest
 from unittest.mock import patch
 
@@ -274,10 +275,17 @@ class TestTextUI(unittest.TestCase):
                              f"{len(self.textUI.logicSimulator.circuit)} gates\n")
 
 
-if __name__ == "__main__":
+def _test():
     suite = unittest.TestSuite()
     loader = unittest.TestLoader()
     suite.addTest(loader.loadTestsFromTestCase(TestDeviceOutput))
     suite.addTest(loader.loadTestsFromTestCase(TestLogicSimulator))
     suite.addTest(loader.loadTestsFromTestCase(TestTextUI))
     unittest.TextTestRunner(verbosity=3).run(suite)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) == 2 and sys.argv[1] == "test":
+        _test()
+    else:
+        TextUI().displayMenu()
